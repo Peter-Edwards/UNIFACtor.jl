@@ -1,5 +1,7 @@
 module UNIFACtor
 
-greet() = print("Hello World!")
+export UNIFAC 
+include("UNIFAC_func_list.jl")
+
 
 end # module
