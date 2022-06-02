@@ -1,0 +1,7 @@
+name = "UNIFACtor"
+uuid = "3194fbce-6249-4f76-a7a1-efd5c50cea0b"
+authors = ["petere <peter.edwards@coreplex.co.uk>"]
+version = "0.1.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
