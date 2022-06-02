@@ -1,6 +1,6 @@
-# UNIFACTOR.jl
+# UNIFACtor.jl
 
-UNIFACTOR.jl is a package for Julia that allows a used to easily calculate the activity coefficients of an arbitrary number of different components of a liquid mixture.
+UNIFACtor.jl is a package for Julia that allows a used to easily calculate the activity coefficients of an arbitrary number of different components of a liquid mixture.
 
 The current iteration of the package can only use the original UNIFAC method to find the activity coefficients. Any and all of the UNIFAC coefficients used in the model were taken from the official list published by the UNIFAC Consortium: 
 
