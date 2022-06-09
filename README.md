@@ -4,7 +4,7 @@ UNIFACtor.jl is a package for Julia that allows the easy calculation of activity
 
 The current iteration of the package includes the original UNIFAC method and the Dortmund Modified method to find the activity coefficients. Any and all of the UNIFAC coefficients used in the model were taken from the official list published by the UNIFAC Consortium:
 
-http://unifac.ddbst.de/published-parameters-unifac.html
+http://unifac.ddbst.de/published-parameters-unifac.html  
 http://unifac.ddbst.de/PublishedParametersUNIFACDO.html
 
 the first 50 groups UNIFAC groups are included in the package’s UNIFAC model along with 108 different sub groups.
