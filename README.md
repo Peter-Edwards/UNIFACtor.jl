@@ -48,9 +48,9 @@ The order in which the functional groups are listed for the input matrices is di
 
 
 ### Basic UNIFAC function:
-+-----------------+----------------+-----------+--------------+
+
 | UNIFACtor Index | Original Index | Sub Group |    Group     |
-+-----------------+----------------+-----------+--------------+
+|-----------------|----------------|-----------|--------------|
 |               1 |              1 | CH3       | [1]CH2       |
 |               2 |              2 | CH2       | [1]CH2       |
 |               3 |              3 | CH        | [1]CH2       |
@@ -159,12 +159,11 @@ The order in which the functional groups are listed for the input matrices is di
 |             106 |            106 | C4H4S     | [50]THIOPHEN |
 |             107 |            107 | C4H3S     | [50]THIOPHEN |
 |             108 |            108 | C4H2S     | [50]THIOPHEN |
-+-----------------+----------------+-----------+--------------+
+
 ### Dortmund Modified UNIFAC function:
 
-+-----------------+----------------+----------+--------------+
 | UNIFACtor Index | Original Index | Subgroup |    Group     |
-+-----------------+----------------+----------+--------------+
+|-----------------|----------------|----------|--------------|
 |               1 |              1 | CH3      | [1]CH2       |
 |               2 |              2 | CH2      | [1]CH2       |
 |               3 |              3 | CH       | [1]CH2       |
@@ -290,5 +289,3 @@ The order in which the functional groups are listed for the input matrices is di
 |             123 |            209 | SO4      | [98]SO4      |
 |             124 |            210 | HSO4     | [98]SO4      |
 |             125 |            211 | PF6      | [99]PF6      |
-+-----------------+----------------+----------+--------------+
-
