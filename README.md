@@ -85,8 +85,8 @@ The order in which the functional groups are listed for the input matrices is di
 |              32 |             31 | CH3NH     | [15]CNH      |
 |              33 |             32 | CH2NH     | [15]CNH      |
 |              34 |             33 | CHNH      | [15]CNH      |
-|              35 |             34 | CH3N      | [16](C)3N    |
-|              36 |             35 | CH2N      | [16](C)3N    |
+|              35 |             34 | CH3N      | [16]\(C\)3N    |
+|              36 |             35 | CH2N      | [16]\(C\)3N    |
 |              37 |             36 | ACNH2     | [17]ACNH2    |
 |              38 |             37 | C5H5N     | [18]PYRIDINE |
 |              39 |             38 | C5H4N     | [18]PYRIDINE |
@@ -200,8 +200,8 @@ The order in which the functional groups are listed for the input matrices is di
 |              34 |             31 | CH3NH    | [15]CH2NH    |
 |              35 |             32 | CH2NH    | [15]CH2NH    |
 |              36 |             33 | CHNH     | [15]CH2NH    |
-|              37 |             34 | CH3N     | [16](C)3N    |
-|              38 |             35 | CH2N     | [16](C)3N    |
+|              37 |             34 | CH3N     | [16]\(C\)3N    |
+|              38 |             35 | CH2N     | [16]\(C\)3N    |
 |              39 |             36 | ACNH2    | [17]ACNH2    |
 |              40 |             37 | AC2H2N   | [18]PYRIDINE |
 |              41 |             38 | AC2HN    | [18]PYRIDINE |
