@@ -1,18 +1,23 @@
 
 module UNIFAC
 
+#The overall Activity function everything is wrapped in
+
 function Activity(T_k,M_lst,x_arr)
 #list includes groups as follows (in order)
 #CH3,CH2,CH,C,CH2=CH,CH=CH,CH2=C,CH=C,C=C,ACH,AC,ACCH3,ACCH2,ACCH,OH(alcohol),CH3OH (Methanol),H2O,ACOH (Alchohol),CH3CO (ketone),CH2CO(Ketone), CHO (Aldheyde),...
+#for a full list, look at the github page.
 M_lst=func_M_lst(M_lst)
 
+#the code does not work with 0 values for x due to the mathematics involved. Probably shouldnt be putting zero values in anyway (because you could just remove the molecule).
+#but this is just here to catch the instances where some may be generating data for a P-X-Y or just an activity-x diagram.
 for i=1:length(x_arr)
     if x_arr[i]<=1e-18
             x_arr[i]=1e-18
     end
 end
 
-    #residual contribution
+#residual contribution to the
 grp_tab=func_infotab_grp(f_Qk(),M_lst,x_arr)
 ind_tab=func_infotab_ind(f_Qk(),M_lst)
 
@@ -310,15 +315,13 @@ end
 
 function func_M_lst(M_lst)
     M_lst2=zeros(length(M_lst),108)
-    for i in 1:length(M_lst)
-        M_fcus=vec(M_lst[i])
-        append!(M_fcus,(zeros(108-length(M_fcus))))
+    for i in 1:length(M_lst)Functionsength(M_fcus))))
         M_lst2[i,:]=M_fcus'
     end
     return M_lst2
 end 
 
-#gives app possible 3 component compositions
+#gives all possible 3 component compositions
 function func_molfracsplit(X_arr)
     x1=Array{Float64}(undef,0)
     x2=Array{Float64}(undef,0)
@@ -331,6 +334,42 @@ function func_molfracsplit(X_arr)
     x3=round.(x3,digits=10)
 
     return (x1,x2,x3)
+end
+
+
+function recipies()
+
+    name_arr=Array{Matrix}(undef,0)
+
+    label_alkane=["ethane","propane","butane","pentane","hexane","heptane","octane","nonane","decane"]
+
+    #alkanes
+    push!(name_arr,[2 0]) #ethane
+    push!(name_arr,[2 1]) #propane
+    push!(name_arr,[2 2]) #butane
+    push!(name_arr,[2 3]) #butane
+    push!(name_arr,[2 4]) #pentane
+    push!(name_arr,[2 5]) #hexane
+    push!(name_arr,[2 6]) #octane
+    push!(name_arr,[2 7]) #nonane
+    push!(name_arr,[2 8]) #decane
+
+    # #alkanes
+
+    # #alkenes
+    # #Aromatics
+    # name_arr[1]=[0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0] #benzene
+    # #Ketones
+    # name_arr[2]=[1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0] #acetone
+    # #Aldheydes
+    # #Alcohols
+    # name_arr[3]=[1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0] #ethanol
+    # #other
+    # name_arr[4]=[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0] #water
+    
+
+    return name_arr
+
 end
 
 end
