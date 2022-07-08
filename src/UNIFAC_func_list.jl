@@ -1,23 +1,18 @@
 
 module UNIFAC
 
-#The overall Activity function everything is wrapped in
-
 function Activity(T_k,M_lst,x_arr)
 #list includes groups as follows (in order)
 #CH3,CH2,CH,C,CH2=CH,CH=CH,CH2=C,CH=C,C=C,ACH,AC,ACCH3,ACCH2,ACCH,OH(alcohol),CH3OH (Methanol),H2O,ACOH (Alchohol),CH3CO (ketone),CH2CO(Ketone), CHO (Aldheyde),...
-#for a full list, look at the github page.
 M_lst=func_M_lst(M_lst)
 
-#the code does not work with 0 values for x due to the mathematics involved. Probably shouldnt be putting zero values in anyway (because you could just remove the molecule).
-#but this is just here to catch the instances where some may be generating data for a P-X-Y or just an activity-x diagram.
 for i=1:length(x_arr)
     if x_arr[i]<=1e-18
             x_arr[i]=1e-18
     end
 end
 
-#residual contribution to the
+    #residual contribution
 grp_tab=func_infotab_grp(f_Qk(),M_lst,x_arr)
 ind_tab=func_infotab_ind(f_Qk(),M_lst)
 
@@ -315,7 +310,9 @@ end
 
 function func_M_lst(M_lst)
     M_lst2=zeros(length(M_lst),108)
-    for i in 1:length(M_lst)Functionsength(M_fcus))))
+    for i in 1:length(M_lst)
+        M_fcus=vec(M_lst[i])
+        append!(M_fcus,(zeros(108-length(M_fcus))))
         M_lst2[i,:]=M_fcus'
     end
     return M_lst2
