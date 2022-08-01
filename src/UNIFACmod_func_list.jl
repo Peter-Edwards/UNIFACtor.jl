@@ -1,18 +1,22 @@
 
 module UNIFACmod
 
+
+#the overall activity function
 function Activity(T_k,M_lst,x_arr)
 #list includes groups as follows (in order)
 #CH3,CH2,CH,C,CH2=CH,CH=CH,CH2=C,CH=C,C=C,ACH,AC,ACCH3,ACCH2,ACCH,OH(alcohol),CH3OH (Methanol),H2O,ACOH (Alchohol),CH3CO (ketone),CH2CO(Ketone), CHO (Aldheyde),...
 M_lst=func_M_lst(M_lst)
 
+#changes zero values so the the math is doable. useful for generating PXY graphs and such.
 for i=1:length(x_arr)
     if x_arr[i]<=1e-18
             x_arr[i]=1e-18
     end
 end
 
-    #residual contribution
+ #residual contribution
+#forming a matrix of group information for mixture and pure substance interraction
 grp_tab=func_infotab_grp(f_Qk(),M_lst,x_arr)
 ind_tab=func_infotab_ind(f_Qk(),M_lst)
 
@@ -30,7 +34,7 @@ for i in 1:length(ind_tab_rho)
     push!(idx,func_lngam(ind_tab_rho[i],grp_tab_rho[1]))
 end
 
-#combining contributions
+#combining combinatorial and residual contributions
 gam_arr=exp.(vec(func_comb_mk2(x_arr,M_lst))+idx)
 
 return gam_arr
@@ -39,6 +43,10 @@ end
 
 
 
+#finding Ri and Qi for every molecule
+#please note that this is a slightly different version of the combinatorial code than the 
+#regular unifac script, they are mathematically equivalent but lval is not reuqired in the mod. 
+#i do plan to change the main UNIFAC scipt over because it makes the code simpler
 
 function func_qiri_mk2(M_lst::Matrix,Qk::Array,Rk::Array)
 
@@ -48,7 +56,7 @@ function func_qiri_mk2(M_lst::Matrix,Qk::Array,Rk::Array)
 
 end
 
-
+#finding theta and phi
 function func_thetaphi(Ri::Array,Qi::Array,x_arr::Array)
     phi=Ri./sum(Ri.*x_arr)
     theta=Qi./sum(Qi.*x_arr)
@@ -58,7 +66,7 @@ function func_thetaphi(Ri::Array,Qi::Array,x_arr::Array)
     return (phi,theta,phi_mod)
 end
 
-
+#finding the overall combinatorial contributions
 function func_comb_mk2(x_arr,M_lst)
     (Ri,Qi)=func_qiri_mk2(M_lst,f_Qk(),f_Rk())
     (phi,theta,phi_mod)=func_thetaphi(Ri,Qi,x_arr)
@@ -69,6 +77,7 @@ function func_comb_mk2(x_arr,M_lst)
     return ln_gamc
 end
 
+#the func_idxarr function is just used to generate the group indexes for f_idxarr
 
 # function func_idxarr()
 #     size_arr=[4;5;2;3;3;1;1;1;2;1;2;1;3;4;3;2;1;3;2;1;3;3;1;1;1;3;1;1;2;1;1;1;1;2;1;1;1;1;2;3;1;3;3;1;1;4;3;3;2;3;5;3;2;3;2;1;1;1;2;1;1;2;1]
@@ -81,6 +90,7 @@ end
 #     return idx_arr
 # end
 
+#function to assign group to each molecule
 function func_assign_grp(M_lst,idx_arr)
     (n,m)=size(M_lst)
 
@@ -92,6 +102,7 @@ function func_assign_grp(M_lst,idx_arr)
     return grp_assign
 end 
 
+#find area fraction for each pure molecule and for the mixture
 function func_arrfrac(Qk,M_lst,x_arr)
     M_lst=M_lst.*x_arr'
     M_ex=sum(M_lst, dims=1)
@@ -104,7 +115,8 @@ function func_arrfrac(Qk,M_lst,x_arr)
 
 
 end
-
+#building a matrix where the information for each pure component is held. I want to change the code so this matrix turns into a struct, it just seems more elegant and less of a bodge. 
+#thats what 4 years of mainly matlab will do to a man.
 function func_infotab_ind(Qk,M_lst)
     (n,m)=size(M_lst)
     idx_s=f_idxarr()
@@ -134,7 +146,7 @@ function func_infotab_ind(Qk,M_lst)
     return tab_out
 
 end
-
+#building a matrix where the information for all of the group mixture is held
 function func_infotab_grp(Qk,M_lst,x_arr)
     (n,m)=size(M_lst)
 
@@ -163,7 +175,7 @@ function func_infotab_grp(Qk,M_lst,x_arr)
 
 
 end
-
+#a function to find psi using the interraction parameter matrix and system temperature. this is the main difference in UNIFACmod, because the temp function is more complex.
 function func_intparams(T,n,m)
     n=n+1
     m=m+1
@@ -174,12 +186,13 @@ function func_intparams(T,n,m)
     
     Cnm=[0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 21.0 22.0 23.0 24.0 25.0 26.0 27.0 28.0 29.0 30.0 31.0 32.0 33.0 34.0 35.0 36.0 37.0 38.0 39.0 40.0 41.0 42.0 43.0 44.0 45.0 46.0 47.0 48.0 49.0 52.0 53.0 55.0 56.0 61.0 84.0 85.0 87.0 89.0 90.0 91.0 93.0 98.0 99.0; 1.0 0.0 0.0 0.0 0.0 0.001551 0.0 0.001144 0.0 0.0 0.0 -0.0031331 0.0 0.0 -0.010252 0.0 0.0 0.0 0.036 0.0 0.009198 0.0 0.0 -0.008735 0.003388 -0.04831 0.02156 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.00098 -0.0020983 0.0 0.0 0.0 0.0 0.00975 -0.008808 0.0 0.0 -0.00016 0.0 0.0 0.0 0.0067607 0.0103753 -0.0166992 0.0074475 0.0 0.0 0.0 -0.0254482; 2.0 0.0 0.0 0.0 0.0 0.004822 -0.014972 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.01088 0.0 0.0 0.01339 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0055 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.004517 NaN 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0141503 0.0 -0.0272505 0.0 0.0 0.0329518; 3.0 0.0 0.0 0.0 0.0 0.01208 0.0 0.0 0.0 0.004237 0.0 0.0 0.0 0.0 0.008138 0.0 0.0 0.0 0.0082 0.0 0.0 0.0 0.0 0.0 0.002645 -0.02844 0.00145 0.012232 0.04593 0.0 0.0 -0.00353 0.0 0.0 NaN 0.0 NaN 0.01966 0.006077 -0.00105 0.0 0.0 0.001488 0.0 -0.01428 0.0 0.0 -0.002141 1.8e-5 -0.002819 0.0 0.0 0.01219 -0.004212 0.0 0.0 0.0085572 0.0039496 0.0 0.0 0.0202432 0.0 0.0 -0.0358313; 4.0 0.0 0.0 0.0 0.0 0.0153 0.0 0.0 0.0 0.000239 0.000869 -0.003449 0.0 0.0 0.03333 0.0 -0.007036 0.02112 0.0039 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.02093 2.24992e-5 0.008819 NaN 0.0 -0.01862 0.0 0.0 NaN 0.0 NaN 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.00045 -0.004625 0.0 0.0 -0.00331 -0.007723 0.0 0.007841 0.0 0.0041351 0.0 0.0 0.0 0.0 0.0 0.0239277; 5.0 0.0009181 0.005197 0.01435 -0.000332 0.0 0.0029287 -0.007514 0.0 -0.006022 -0.006668 0.00769 0.0 0.006065 0.0 0.0 0.008854 -0.007126 0.1842 -0.002478 0.0 0.0 0.0 0.0 0.0 -0.009397 0.0 0.0 NaN NaN 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.01446 -0.002004 NaN 0.0 0.0 0.007737 0.005497 0.0 0.0636 0.00159 NaN -0.002547 0.0 0.0 0.0 0.0 0.0332832 0.0 0.0 0.0 0.0030855 0.0090199; 6.0 0.0 -0.0018 0.0 0.0 -0.016158 0.0 -0.0022 0.02998 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.006551 -0.02004 0.0141 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.002688 NaN -0.007797 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 -0.00335 NaN -9.0055e-5 NaN 0.0 0.0048 0.0 0.0 0.00172 NaN -0.003346 0.0 0.0149627 0.0 0.0 -0.0048637 0.0 0.0 0.0 0.0 NaN; 7.0 0.0009021 0.0 0.0 0.0 0.01641 -0.004 0.0 -0.02702 0.008838 0.0 -0.002012 0.0 0.010763 0.01032 0.0 0.002205 0.0 -0.0034 0.0 -0.015455 0.0 0.0 NaN 0.0 0.0 0.0 NaN NaN NaN 0.0 0.0 NaN 0.0 NaN 0.0 0.0 NaN NaN 0.0 NaN 0.0 -0.00030011 0.0033318 0.0 0.0 0.0 0.006054 0.0 -0.008555 NaN 0.01656 NaN 0.0 0.0 0.0451602 0.0 NaN -0.0022558 0.0 0.0 0.0 0.0032526 NaN; 8.0 0.0 0.0 0.0 0.0 0.0 0.002283 0.002329 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN 0.01655 -0.0101 NaN 0.0 NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 9.0 0.0 0.0 -0.003715 0.0001133 0.000954 0.0 -0.003252 0.0 0.0 0.0 0.0 0.0 0.04757 NaN 0.0 0.001863 0.0141 0.0 0.0 0.0 0.0 0.0 0.0021443 -0.0014 -0.02253 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.011586 NaN 0.0 0.00364 0.0 NaN 0.00029817 NaN 0.0 0.0 0.0 0.0 NaN NaN NaN NaN 0.0160979 0.0041569 0.0 0.0 0.0 0.0 NaN 0.0068391 NaN; 10.0 0.0 0.0 0.0 -0.01355 0.06212 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN 0.0 NaN NaN 0.0 NaN 0.0 NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 11.0 0.0039282 0.0 0.0 0.01338 -0.004885 0.0 0.001074 0.0 0.0 0.0 0.0 0.0 0.04051 NaN 0.04303 0.0 -0.01012 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN 0.0 NaN 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN 0.0 NaN 0.0 0.001682 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN NaN NaN -0.0082 -0.007325 NaN NaN NaN NaN NaN NaN NaN NaN NaN; 12.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 0.0 NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN 0.0 NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 13.0 0.0 0.0 0.0 0.0 0.000815 0.0 -0.000914 0.0 -0.002462 0.0 0.008271 NaN 0.0 NaN NaN NaN NaN 0.0193 0.01065 0.0 0.002418 0.01806 0.0 0.0 -0.01983 0.0 NaN 0.0 0.0 0.0 NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0 NaN NaN NaN 0.0 0.0 0.0 0.0 NaN NaN 0.0 7.0e-6 NaN NaN NaN 0.006918 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN; 14.0 0.0033576 0.01039 0.006999 -0.0142 0.0 0.0 -0.005908 NaN NaN NaN NaN NaN NaN 0.0 0.02557 0.01058 NaN NaN 0.0062553 NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 15.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.01193 NaN NaN -0.01795 0.0 0.0 NaN NaN 0.0 NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN 0.020758 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 16.0 0.0 0.0 0.0 0.007088 0.09 0.006714 0.002634 NaN 0.01558 NaN 0.0 NaN NaN 0.004801 0.0 0.0 NaN NaN NaN NaN NaN 0.0 NaN 0.0 -0.01856 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN 0.0 NaN NaN 0.0 NaN 0.0 0.0 NaN NaN NaN NaN 0.017738 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 17.0 0.0 0.02783 0.0 -0.005945 0.007584 0.002214 0.0 0.000469 0.02917 NaN 0.03543 NaN NaN NaN NaN NaN 0.0 -0.0283 0.009003 NaN 0.000377 NaN NaN 0.01635 0.0 NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN 0.0 NaN NaN NaN NaN 0.006451 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 18.0 -0.0087 0.0 0.0023 0.0153 -0.0055 0.0023 -0.0029 0.004 0.0 NaN 0.0 0.0 0.004 NaN NaN NaN -0.0007 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN -0.0004 NaN NaN NaN 0.0 0.0 NaN 0.0 NaN -0.00102 NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 19.0 0.0 0.0 0.0 0.0 -0.00878 0.0 0.0 NaN 0.0 NaN 0.0 0.0 -0.002636 0.0097411 0.0 NaN 0.007147 0.0 0.0 NaN 0.0 0.0 NaN 0.0 -0.02978 0.0 NaN 0.0 0.0 NaN 0.0 NaN 0.0 0.0 NaN 0.0 0.0 NaN 0.0 NaN 0.0 0.001118 0.0 NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 20.0 0.010238 0.0 0.0 0.0 0.0 0.0 0.0052371 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN 0.0 NaN 0.0 0.0 0.0 NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN 0.0 NaN 0.0 NaN 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 21.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN 0.001269 NaN NaN NaN -0.003676 0.0 0.0 0.0 0.0 0.0 0.0069046 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN 0.0 NaN NaN NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 22.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN 0.002745 NaN NaN 0.0 NaN 0.0 0.0 0.0 0.0 0.0 0.0067179 0.0 0.0 0.0 NaN NaN NaN 0.0 NaN 0.0 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0 NaN 0.0 NaN NaN 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 23.0 0.014417 0.0 0.0 0.0 0.0 0.0 NaN NaN 0.0037129 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0062484 0.003701 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 24.0 -0.002416 0.0 -0.003239 0.0 0.0 0.0 0.0 0.0 -0.0025 NaN 0.0 0.0 0.0 0.0 0.0 0.0 0.01466 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -0.03582 0.0 0.0 0.0 NaN 0.0 NaN 0.0 0.0 NaN 0.0 0.0 0.0 0.0 0.0 NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN 0.001855 0.0 NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 25.0 0.03317 0.0 0.01661 0.0 0.002987 0.0 0.0 0.0 0.006309 NaN 0.0 0.0 0.01675 0.0 0.0 0.03722 0.0 NaN 0.01158 0.0 0.0 0.0 NaN 0.009219 0.0 0.0 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 26.0 -0.006266 0.0 -0.005376 0.004381 0.0 0.001238 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN 0.0 0.0 NaN 0.0 0.0 0.0 0.0 0.0 NaN NaN NaN 0.0 0.0 0.0 NaN NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 27.0 0.0 NaN 0.008299 4.51638e-7 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN 0.0 0.0 0.0 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 28.0 0.0 0.0 0.003682 -0.01225 NaN 0.01177 NaN NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 29.0 0.0 NaN 0.0 NaN NaN 0.0 NaN NaN 0.0 0.0 NaN 0.0 0.0 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 30.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 31.0 0.0 NaN -0.00141 0.00717 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 32.0 0.0 NaN 0.0 0.0 0.0 0.0 NaN NaN 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 33.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 34.0 0.0 -0.0027 NaN NaN 0.0 NaN NaN NaN 0.0 0.0 NaN NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 35.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 36.0 0.0 0.0 NaN NaN 0.0 0.0 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 37.0 0.0 0.0 0.007813 0.0 0.0 0.0 NaN NaN 0.0 0.0 0.0 0.0 0.0 NaN NaN NaN NaN NaN 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN 0.0 0.0 0.013871 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 38.0 0.0 0.0 -0.007754 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 0.0 NaN 0.0027 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 0.0 NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 39.0 0.0 0.0 0.000668 0.0 0.0 0.0 0.0 NaN 0.011386 0.0 0.0 0.0 NaN 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0 0.0 0.0 0.0 0.0 NaN NaN 0.0 0.0 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 40.0 0.0 NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 41.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 42.0 0.001291 0.0 -0.001557 0.0 -0.006309 0.0 0.003455 0.0 -0.004653 0.0 4.1e-5 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.004586 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN NaN 0.0 NaN NaN NaN 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 0.0 0.0119213 0.0 0.0076136 0.0 0.0 0.0 0.0360498 NaN; 43.0 0.0024016 0.0037455 0.0 0.0 -0.008186501 0.0053598 -7.437899e-14 NaN 0.0 NaN 0.0 NaN 0.0 0.0 0.0 NaN NaN 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN 0.00091722 0.0 0.0 NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 0.0 NaN -0.0080098 0.0 0.0 NaN NaN NaN; 44.0 0.0 NaN -0.015439 0.0 NaN NaN 0.0 NaN NaN NaN 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 45.0 0.0 0.0 0.0 0.0 0.0 0.025981 0.0 NaN 0.0045351 NaN 0.0 0.0 0.0 NaN NaN 0.0 NaN 0.0 0.0 0.0 0.0 0.0 NaN 0.0 0.0 NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 46.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 47.0 0.0 0.0 0.001331 0.0 0.004691 0.0 -0.001586 NaN 0.0 NaN 0.0 NaN NaN 0.0 0.0 0.0 -0.009617 -0.00015 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 48.0 -0.000623 0.0 2.0e-6 -0.000137 -0.005877 -0.00208 0.0 NaN 0.0 NaN 0.0 NaN 0.0 NaN NaN 0.0 NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 49.0 0.000583 0.0 0.000281 0.000607 0.0 0.0 -0.000916 NaN 0.0 NaN 0.0 NaN -4.0e-6 NaN NaN NaN NaN NaN 0.0 NaN 0.0 0.0 NaN -0.001271 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN 0.0 NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 52.0 0.0 0.0 0.0 0.0 -0.035 0.0 NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 53.0 0.0 0.0 0.0 0.0 -0.00244 -0.00166 -0.0048 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 55.0 4.0e-5 0.0 -0.00782 0.00633 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 -6.5e-5 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN; 56.0 0.0 0.0 0.00242 0.01424 0.001188 0.01159 0.0 NaN NaN NaN 0.0126 NaN 0.00839 0.0 0.008006 -0.00165 NaN NaN 0.0 NaN 0.0 0.0 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN 0.0 -0.000969 0.0 -0.0016 NaN NaN NaN NaN NaN NaN NaN NaN NaN; 61.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN NaN NaN 0.013472 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0078 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN; 84.0 0.0 0.0 0.0 -0.0007792 0.0 -0.0098745 0.0019814 NaN 0.0047161 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0094424 NaN 0.0005537 NaN -0.0025991 NaN 0.0 -0.0518203; 85.0 0.0095873 0.0 0.0025793 0.0 0.0 0.0 0.0 NaN 0.0074865 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0018563 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0208006 0.0 0.0382461 NaN 0.0 NaN NaN NaN NaN; 87.0 -0.0055872 0.0 -0.0027586 -0.0186009 0.0 0.0 NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0160959 0.0 NaN NaN 0.0 NaN NaN NaN; 89.0 0.0010454 -0.0254894 0.0 0.0 -0.0134709 -0.0062036 -0.0067585 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0137839 -0.0351738 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 2.63e-5 NaN NaN 0.0 -0.0092342 NaN NaN NaN NaN; 90.0 -0.0081757 0.0 0.0 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN -0.0356672 0.0 NaN NaN NaN NaN; 91.0 0.0 0.0056279 -0.0001404 0.0 0.0 0.0 0.0 NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN -0.0035024 NaN 0.0 NaN NaN 0.0 NaN NaN NaN; 93.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN; 98.0 0.0 0.0 0.0 0.0 0.000518 0.0 -0.000807 NaN -0.0082641 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN -0.029654 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN 0.0 NaN NaN NaN NaN NaN NaN 0.0 NaN; 99.0 -0.0330202 -0.0078001 0.0028389 -0.0217293 -0.0148923 NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN NaN -0.0073933 NaN NaN NaN NaN NaN NaN NaN 0.0]
     
-
+    #psi calculation
     psi=exp(-(Anm[n,m]+Bnm[n,m]*T+Cnm[n,m]*T^2)/T)
     return psi
 
 end 
 
+#finds the ln(rho) values for both the pure components and the mixture by using the interraction parameters, area fraction and Qk.
 function func_lnRho(tab_in,T)
     (n,m)=size(tab_in)
 
@@ -220,7 +233,7 @@ function func_lnRho(tab_in,T)
 
 
 end 
-
+#combines lnRhos for each group from the pure component and the mixture. does this one molecule at a time
 function func_lngam(tab_ind,tab_grp)
     idx_ind=tab_ind[1,:]
     idx_grp=tab_grp[1,:]
@@ -246,19 +259,19 @@ function func_lngam(tab_ind,tab_grp)
 
 
 end
-
+#Rk data
 function f_Rk()
 
     [0.6325;0.6325;0.6325;0.6325;1.2832;1.2832;1.2832;1.2832;1.2832;0.3763;0.3763;0.91;0.91;0.91;1.2302;1.063;0.6895;0.8585;1.7334;1.08;1.7048;1.7048;0.7173;1.27;1.27;1.9;1.1434;1.1434;1.1434;1.6607;1.6607;1.6607;1.6607;1.368;1.368;1.368;1.0746;1.0746;1.1849;1.4578;1.2393;1.0731;1.5575;1.5575;0.8;0.9919;0.9919;0.9919;1.8;1.8;1.8;2.65;2.618;0.5365;2.644;2.5;2.887;0.4656;1.24;1.289;1.535;1.299;2.088;1.076;1.209;0.9214;1.303;3.6;1;0.5229;0.8814;2;2.381;1.284;1.284;0.8215;1.6;0.7136;0.3479;0.347;1.7023;1.4046;1.0413;0.8;2.45;3.981;3.7543;3.5268;3.2994;1.4515;1.5;1.5;2.4748;2.2739;2.0767;2.4617;2.4617;1.7943;1.6282;1.4621;1.3601;0.683;0.9104;1.063;0.9104;2.42;2.42;2.42;2.687;2.46;1.613;1.3863;1.1589;1.3662;1.843;5.621;2.7867;3.9628;2.1094;2.4873;3.371;1.0678;0.9903;1.5654;3.8183]
 
 end
-
+#Qk data
 function f_Qk()
 
     [1.0608;0.7081;0.3554;0;1.6016;1.2489;1.2489;0.8962;0.4582;0.4321;0.2113;0.949;0.7962;0.3769;0.8927;0.8663;0.8345;0.9938;2.4561;0.975;1.67;1.5542;0.771;1.6286;1.4228;1.8;1.6022;1.2495;0.8968;1.6904;1.3377;0.985;0.985;1.4332;1.0805;0.7278;1.176;0.824;0.8067;0.9022;0.633;0.353;1.5193;1.1666;0.9215;1.3654;1.0127;0.66;2.5;2.1473;1.7946;2.3778;3.1836;0.3177;2.5;2.304;2.241;0.3589;1.068;1.762;1.316;1.289;2.4;0.9169;1.4;1.3;1.132;2.692;0.92;0.7391;0.7269;2.093;1.522;1.266;1.098;0.5135;0.9;0.8635;0.1071;0;1.8784;1.4;1.0116;1.2742;2.8912;3.2;2.892;2.58;2.352;1.248;1.08;1.08;1.9643;1.5754;1.1866;2.192;1.842;1.34;1.06;0.78;1.8031;0.3418;0.6538;1.123;0.6538;2.4976;2.0018;2.2497;2.12;1.808;1.368;1.06;0.748;0.6797;1.6997;5.9463;2.7723;0.6214;2.5106;2.4457;2.0001;2.244;3.5249;3.8076;3.6018]
 
 end
-
+#group index data
 function f_idxarr()
 
     [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 6.0, 7.0, 8.0, 9.0, 9.0, 10.0, 11.0,
@@ -270,7 +283,7 @@ function f_idxarr()
 
 
 end 
-
+#adds zeros onto M_lst entries
 function func_M_lst(M_lst)
     M_lst2=zeros(length(M_lst),125)
     for i in 1:length(M_lst)
@@ -295,5 +308,7 @@ function func_molfracsplit(X_arr)
 
     return (x1,x2,x3)
 end
+
+# currently doing a recipe section for the original UNIFAC function. will do one for this function too, however it will be slightly different.
 
 end
