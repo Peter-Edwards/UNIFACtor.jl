@@ -84,16 +84,16 @@ end
 #     idx_arr=Array{Float64 }(undef,0)
 #     ind=1
 #     for i in 1:length(size_arr)
-#         append!(idx_arr,ones(size_arr[i])*ind) 
+#         append!(idx_arr,ones(spush!(ind.index,1)arr[i])*ind) 
 #         ind=ind+1
 #     end
 #     return idx_arr
 # end
 
+#start of the redisual part calculation
 #function to assign group to each molecule
 function func_assign_grp(M_lst,idx_arr)
     (n,m)=size(M_lst)
-
     grp_assign=zeros(n,m)
     for i in 1:n
         M_fcus=M_lst[i,:]
@@ -115,6 +115,7 @@ function func_arrfrac(Qk,M_lst,x_arr)
 
 
 end
+
 #building a matrix where the information for each pure component is held. I want to change the code so this matrix turns into a struct, it just seems more elegant and less of a bodge. 
 #thats what 4 years of mainly matlab will do to a man.
 function func_infotab_ind(Qk,M_lst)
@@ -146,6 +147,35 @@ function func_infotab_ind(Qk,M_lst)
     return tab_out
 
 end
+
+struct InfoStruct
+
+    index::Array{Int64}
+    Quan::Array{Int64}
+    Group::Array{Int64}
+    AreaFrac::Array{Float64}
+    Qk::Array{Float64}
+    LnRho::Array{Float64}
+
+end
+
+#new and improved version of infotab_ind (with structs)
+function func_infotab_indV2(Qk,M_lst)
+    idx_s=f_idxarr()
+    tab_out=Array{InfoStruct}(undef,0)
+    for i in axes(M_lst)[1]
+        fcus_Mlst=M_lst[i,:]'
+        index=findall(x->x>=1,vec(fcus_Mlst))
+        Arr_frac=func_arrfrac(Qk,fcus_Mlst,1)
+
+        # list in decending order, index of group, quantity of group, interaction catagory of group, Area Fraction of group, Qk value of group
+        tab_fcus=InfoStruct(index,fcus_Mlst[index],idx_s[index],Arr_frac[index],Qk[index],[])
+        append!(tab_out,[tab_fcus])
+    end
+    return tab_out
+
+end
+
 #building a matrix where the information for all of the group mixture is held
 function func_infotab_grp(Qk,M_lst,x_arr)
     (n,m)=size(M_lst)
@@ -175,6 +205,24 @@ function func_infotab_grp(Qk,M_lst,x_arr)
 
 
 end
+#new and improved version of infotab_grp (with structs)
+function func_infotab_grpV2(Qk,M_lst,x_arr)
+
+    Arr_frac=func_arrfrac(Qk,M_lst,x_arr)
+    idx_gs=f_idxarr()
+
+    Quan_idx=sum((M_lst),dims=1)
+    index=findall(x->x>=1,vec(Quan_idx))
+    tab_out=InfoStruct(index,Quan_idx[index],idx_gs[index],Arr_frac[index],Qk[index],[])
+    # list in decending order, index of group, quantity of group, interaction catagory of group, Area Fraction of group, Qk value of group
+    
+    return tab_out
+
+
+end
+
+
+
 #a function to find psi using the interraction parameter matrix and system temperature. this is the main difference in UNIFACmod, because the temp function is more complex.
 function func_intparams(T,n,m)
     n=n+1
