@@ -217,8 +217,6 @@ function func_infotab_grpV2(Qk,M_lst,x_arr)
     # list in decending order, index of group, quantity of group, interaction catagory of group, Area Fraction of group, Qk value of group
     
     return tab_out
-
-
 end
 
 
