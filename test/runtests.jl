@@ -1,4 +1,5 @@
 using Test
+using BenchmarkTools
 using UNIFACtor
 
 x1=0.5
@@ -23,3 +24,5 @@ testmean1=sum((test_UNIFAC1-test_UNIFACmod1).^2 ./test_UNIFAC1)/length(test_UNIF
 
 
 @test testmean1<0.05
+
+

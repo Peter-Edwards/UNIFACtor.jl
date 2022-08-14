@@ -1,7 +1,6 @@
 
 module UNIFACmod
 
-
 #the overall activity function
 function Activity(T_k,M_lst,x_arr)
 #list includes groups as follows (in order)
@@ -9,29 +8,22 @@ function Activity(T_k,M_lst,x_arr)
 M_lst=func_M_lst(M_lst)
 
 #changes zero values so the the math is doable. useful for generating PXY graphs and such.
-for i=1:length(x_arr)
-    if x_arr[i]<=1e-18
-            x_arr[i]=1e-18
-    end
-end
+x_arr[x_arr .<= 1e-8] .= 1e-8
 
  #residual contribution
 #forming a matrix of group information for mixture and pure substance interraction
-grp_tab=func_infotab_grp(f_Qk(),M_lst,x_arr)
-ind_tab=func_infotab_ind(f_Qk(),M_lst)
+grp_tab=func_infotab_grpV2(f_Qk(),M_lst,x_arr)
+ind_tab=func_infotab_indV2(f_Qk(),M_lst)
 
-
-ind_tab_rho=Array{Matrix}(undef,0)
-for i in 1:length(ind_tab)
-append!(ind_tab_rho,[func_lnRho(ind_tab[i],T_k)])
+#updating each struct with the LnRho line 
+grp_tab=func_lnRho(grp_tab,T_k)
+for i in eachindex(ind_tab)
+ind_tab[i]=func_lnRho(ind_tab[i],T_k)
 end
 
-grp_tab_rho=Array{Matrix}(undef,0)
-append!(grp_tab_rho,[func_lnRho(grp_tab,T_k)])
-
 idx=Array{Float64}(undef,0)
-for i in 1:length(ind_tab_rho)
-    push!(idx,func_lngam(ind_tab_rho[i],grp_tab_rho[1]))
+for i in eachindex(ind_tab)
+    push!(idx,func_lngamV2(ind_tab[i],grp_tab))
 end
 
 #combining combinatorial and residual contributions
@@ -90,17 +82,6 @@ end
 #     return idx_arr
 # end
 
-#start of the redisual part calculation
-#function to assign group to each molecule
-function func_assign_grp(M_lst,idx_arr)
-    (n,m)=size(M_lst)
-    grp_assign=zeros(n,m)
-    for i in 1:n
-        M_fcus=M_lst[i,:]
-        grp_assign[i,:]=map(!=(0),M_fcus).*idx_arr
-    end
-    return grp_assign
-end 
 
 #find area fraction for each pure molecule and for the mixture
 function func_arrfrac(Qk,M_lst,x_arr)
@@ -116,38 +97,8 @@ function func_arrfrac(Qk,M_lst,x_arr)
 
 end
 
-#building a matrix where the information for each pure component is held. I want to change the code so this matrix turns into a struct, it just seems more elegant and less of a bodge. 
-#thats what 4 years of mainly matlab will do to a man.
-function func_infotab_ind(Qk,M_lst)
-    (n,m)=size(M_lst)
-    idx_s=f_idxarr()
-    tab_out=Array{Matrix}(undef,0)
-    for i in 1:n
-        M_fcus=M_lst[i,:]
-        GRP_assign=func_assign_grp(M_fcus',idx_s)
-        Arr_frac=func_arrfrac(Qk,M_fcus',1)
-        idx_arr=Array{Float64}(undef,0)
-        Quan_arr=Array{Float64}(undef,0)
-        GRP_arr=Array{Float64}(undef,0)
-        Area_arr=Array{Float64}(undef,0)
-        Qk_arr=Array{Float64}(undef,0)
-        for j in 1:length(M_fcus)
-            if Int(M_fcus[j]) != 0
-                push!(idx_arr,j)
-                push!(Quan_arr,M_fcus[j])
-                push!(GRP_arr,GRP_assign[j])
-                push!(Area_arr,Arr_frac[j])
-                push!(Qk_arr,Qk[j])
-            end
-        end
-        # list in decending order, index of group, quantity of group, interaction catagory of group, Area Fraction of group, Qk value of group
-        tab_fcus=[idx_arr'; Quan_arr'; GRP_arr'; Area_arr';Qk_arr']
-        append!(tab_out,[tab_fcus])
-    end
-    return tab_out
 
-end
-
+#the struct for infotab
 struct InfoStruct
 
     index::Array{Int64}
@@ -158,6 +109,8 @@ struct InfoStruct
     LnRho::Array{Float64}
 
 end
+#building a matrix where the information for each pure component is held. I want to change the code so this matrix turns into a struct, it just seems more elegant and less of a bodge. 
+#thats what 4 years of mainly matlab will do to a man.
 
 #new and improved version of infotab_ind (with structs)
 function func_infotab_indV2(Qk,M_lst)
@@ -176,36 +129,7 @@ function func_infotab_indV2(Qk,M_lst)
 
 end
 
-#building a matrix where the information for all of the group mixture is held
-function func_infotab_grp(Qk,M_lst,x_arr)
-    (n,m)=size(M_lst)
-
-    idx_arr=Array{Float64}(undef,0)
-    Quan_arr=Array{Float64}(undef,0)
-    GRP_arr=Array{Float64}(undef,0)
-    Area_arr=Array{Float64}(undef,0)
-    Qk_arr=Array{Float64}(undef,0)
-    Arr_frac=func_arrfrac(Qk,M_lst,x_arr)
-
-    idx_gs=f_idxarr()
-
-    Quan_idx=sum((M_lst),dims=1)
-    for i in 1:m
-        if Int(Quan_idx[i]) != 0
-            push!(idx_arr,i)
-            push!(Quan_arr,Quan_idx[i])
-            push!(GRP_arr,idx_gs[i])
-            push!(Area_arr,Arr_frac[i])
-            push!(Qk_arr,Qk[i])
-        end
-    end 
-    # list in decending order, index of group, quantity of group, interaction catagory of group, Area Fraction of group, Qk value of group
-    tab_out=[idx_arr'; Quan_arr'; GRP_arr'; Area_arr';Qk_arr']
-    return tab_out
-
-
-end
-#new and improved version of infotab_grp (with structs)
+#building a struct where the information for all of the group mixture is held
 function func_infotab_grpV2(Qk,M_lst,x_arr)
 
     Arr_frac=func_arrfrac(Qk,M_lst,x_arr)
@@ -239,72 +163,51 @@ function func_intparams(T,n,m)
 end 
 
 #finds the ln(rho) values for both the pure components and the mixture by using the interraction parameters, area fraction and Qk.
-function func_lnRho(tab_in,T)
-    (n,m)=size(tab_in)
-
-    t_1=Array{Float64}(undef,0)
-    t_2=Array{Float64}(undef,0)
+function func_lnRho(info_in,T)
     LnRHO=Array{Float64}(undef,0)
 
-    for i in 1:m
+    for i in eachindex(info_in.index)
      
-        ind=0
-        for j in 1:m
-            ind=ind+tab_in[4,j]*func_intparams(T,Int(tab_in[3,j]),Int(tab_in[3,i]))
-        end
-        push!(t_1,log(ind))
-
-
-        ind=0
-        for j in 1:m
-            numer=tab_in[4,j]*func_intparams(T,Int(tab_in[3,i]),Int(tab_in[3,j]))
-            ind_2=0
-            for k in 1:m
-                ind_2=ind_2+tab_in[4,k]*func_intparams(T,Int(tab_in[3,k]),Int(tab_in[3,j]))  
+        ind_t1=0
+        ind_t2=0
+        for j in eachindex(info_in.index)
+            ind_t1 += info_in.AreaFrac[j]*func_intparams(T,info_in.Group[j],info_in.Group[i])
+     
+            ind_t21=info_in.AreaFrac[j]*func_intparams(T,info_in.Group[i],info_in.Group[j])
+            ind_t22=0
+            for k in eachindex(info_in.index)
+                ind_t22 += info_in.AreaFrac[k]*func_intparams(T,info_in.Group[k],info_in.Group[j])  
             end
-            denom=ind_2
-
-            ind=ind+numer/denom
+            ind_t2 += ind_t21/ind_t22
         end
-        push!(t_2,ind)
 
-        push!(LnRHO, tab_in[5,i]*(1-t_1[i]-t_2[i]))
+        push!(LnRHO, info_in.Qk[i]*(1-log(ind_t1)-ind_t2))
         
     end 
     #append the values onto the end of the tab
-    tab_out=[tab_in;LnRHO']
-    return tab_out
-
-
-
-
+    append!(info_in.LnRho,LnRHO)
+    return info_in
 end 
+
 #combines lnRhos for each group from the pure component and the mixture. does this one molecule at a time
-function func_lngam(tab_ind,tab_grp)
-    idx_ind=tab_ind[1,:]
-    idx_grp=tab_grp[1,:]
+function func_lngamV2(info_ind,info_grp)
 
-    idx_2=Array{Matrix}(undef,0)
-    for j in 1:length(idx_ind)
-        for i in 1:length(idx_grp)
-            if idx_grp[i] == idx_ind[j]
-                push!(idx_2,[j i])
-            end
-        end
+    n=info_ind.index .∈ [info_grp.index]
+    idx_grp=indexin(info_ind.index[n],info_grp.index)
+    idx_ind=indexin(info_ind.index[n],info_ind.index)
+
+    lngamR=0
+    for i in eachindex(idx_ind)
+        fcus_idx=(info_grp.LnRho[idx_grp[i]]-info_ind.LnRho[idx_ind[i]])*info_ind.Quan[idx_ind[i]]
+        lngamR += fcus_idx
     end
-    
-    sum_1=0
-    for i in 1:length(idx_2)
-        fcus_idx=tab_grp[6,Int(idx_2[i][2])]-tab_ind[6,Int(idx_2[i][1])]
-        fcus_idx=fcus_idx*tab_ind[2,Int(idx_2[i][1])]
-        sum_1=sum_1+fcus_idx
-    end
-    
-    lngamR=sum_1
+
     return lngamR
-
-
 end
+
+
+
+
 #Rk data
 function f_Rk()
 
@@ -332,7 +235,7 @@ end
 #adds zeros onto M_lst entries
 function func_M_lst(M_lst)
     M_lst2=zeros(length(M_lst),125)
-    for i in 1:length(M_lst)
+    for i in eachindex(M_lst)
         M_fcus=vec(M_lst[i])
         append!(M_fcus,(zeros(125-length(M_fcus))))
         M_lst2[i,:]=M_fcus'
@@ -344,7 +247,7 @@ end
 function func_molfracsplit(X_arr)
     x1=Array{Float64}(undef,0)
     x2=Array{Float64}(undef,0)
-    for i in 1:length(X_arr)
+    for i in eachindex(X_arr)
         append!(x1,(ones(length(X_arr)-i+1)*X_arr[i]))
         append!(x2,X_arr[1:(length(X_arr)-(i-1))])
     end
@@ -357,4 +260,4 @@ end
 
 # currently doing a recipe section for the original UNIFAC function. will do one for this function too, however it will be slightly different.
 
-end
+end 

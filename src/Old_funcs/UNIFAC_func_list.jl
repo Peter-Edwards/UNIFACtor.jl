@@ -10,11 +10,7 @@ M_lst=func_M_lst(M_lst)
 
 
 #changes zero values so the the math is doable. useful for generating PXY graphs and such.
-for i=1:length(x_arr)
-    if x_arr[i]<=1e-18
-            x_arr[i]=1e-18
-    end
-end
+x_arr[x_arr .<= 1e-8] .= 1e-8
 
 #residual contribution
 #forming a matrix of group information for mixture and pure substance interraction

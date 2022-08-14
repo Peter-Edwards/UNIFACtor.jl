@@ -1,7 +1,8 @@
 module UNIFACtor
 
-export UNIFAC, UNIFACmod
-include("UNIFAC_func_list.jl")
-include("UNIFACmod_func_list.jl")
+export UNIFAC, UNIFACmod, UNIFACmodV2, UNIFACV2
+
+include("UNIFAC_func_lstV2.jl")
+include("UNIFACmod_func_listV2.jl")
 
 end # module
