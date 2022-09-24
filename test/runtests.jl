@@ -1,5 +1,4 @@
 using Test
-using BenchmarkTools
 using UNIFACtor
 
 x1=0.5
