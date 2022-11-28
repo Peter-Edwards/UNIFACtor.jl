@@ -1,8 +1,15 @@
 module UNIFACtor
 
-export UNIFAC, UNIFACmod, UNIFACmodV2, UNIFACV2
+#Activity functions
+include("Activity_modules/Activity_UNIFAC.jl")
+include("Activity_modules/Activity_UNIFACmod.jl")
+using .Activity_UNIFACmod, .Activity_UNIFAC
+export UNIFACmod, UNIFAC
+#Fugacity Functions
+#include("Fugacity_modiles/Fugacity_func_list.jl")
 
-include("UNIFAC_func_lstV2.jl")
-include("UNIFACmod_func_listV2.jl")
+#system parameter functions
 
-end # module
+
+end
+
