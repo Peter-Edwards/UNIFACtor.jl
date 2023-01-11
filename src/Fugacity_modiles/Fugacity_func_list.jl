@@ -49,8 +49,10 @@ function VdW_EOS(P, T, Pc, Tc)
     A = a * P / (R * T)^2
     B = b * P / (R * T)
 
-    Z = cubic_solve([1, -(1 + B), A, -A * B])
-    return Z[end]
+    Z = cubic_solve([1, -(1 + B), A, -A * B])[end]
+    log_fug = Z - 1 - A / Z - log(Z - B)
+    #log_fug=Z - 1 - a * P / ((R * T)^2 * Z) - log((Z * R * T - b * P) / (R * T))
+    return Z, exp(log_fug)
 end
 
 #Redlich Kwong EOS for a pure component to find compressibility (Z)
@@ -77,9 +79,24 @@ function SRK_EOS(P, T, Pc, Tc, ω)
     B = b * P / (R * T)
 
     Z = cubic_solve([1, -1, (A - B - B^2), -A * B])[end]
-
     log_fug = Z - 1 - log(Z - B) - A / B * log(1 + B / Z)
-    return (Z, exp(log_fug))
+    return Z, exp(log_fug)
+end
+
+#Peng Robinson EOS for a pure component to find compressibility (Z)
+function PR_EOS(P, T, Pc, Tc, ω)
+    a = 0.457235 * ((R * Tc)^2 / Pc)
+    b = 0.077796 * (R * Tc / Pc)
+
+    α = (1 + (0.3796 + 1.485 * ω - 0.1644 * ω^2 + 0.01667 * ω^3) * (1 - sqrt(T / Tc)))^2
+
+    A = α * a * P / (R^2 * T^2)
+    B = b * P / (R * T)
+
+    Z = cubic_solve([1, -(1 - B), (A - 2 * B - 3 * B^2), -(A * B - B^2 - B^3)])[end]
+    log_fug = Z - 1 - log(Z - B) - A / (2 * sqrt(2) * B) * log((Z + (1 + sqrt(2)) * B) / (Z + (1 - sqrt(2)) * B))
+
+    return Z, exp(log_fug)
 end
 
 #Van der Waals calculation for a component mixture.
@@ -128,6 +145,7 @@ end
 #model always assumes a basic VdW mixing rules, no binary coefficients.
 function EOS_Mix_full(xi, P, T, Pc, Tc, ω, mdl, kij)
 
+    mdl = lowercase(mdl)
     #correcting from matrix to vector form
     xi = vec(xi)
     Pc = vec(Pc)
@@ -147,19 +165,19 @@ function EOS_Mix_full(xi, P, T, Pc, Tc, ω, mdl, kij)
     ln_phi = Array{Float64}(undef, length(ai))
     fug_coeff = copy(ln_phi)
 
-    if mdl != "VdW"
+    if mdl != "vdw"
         #for non VdW models, finding the compressibility (Z) and then each component fugacity coefficient.
-        if mdl == "RK"
+        if mdl == "rk"
             Z = cubic_solve([1, -1, (A - B - B^2), -A * B])[end]
             δ_1 = 1
             δ_2 = 0
 
-        elseif mdl == "SRK"
+        elseif mdl == "srk"
             Z = cubic_solve([1, -1, (A - B - B^2), -A * B])[end]
             δ_1 = 1
             δ_2 = 0
 
-        elseif mdl == "PR"
+        elseif mdl == "pr"
             Z = cubic_solve([1, -(1 - B), (A - 2 * B - 3 * B^2), -(A * B - B^2 - B^3)])[end]
             δ_1 = 1 + sqrt(2)
             δ_2 = 1 - sqrt(2)
@@ -202,25 +220,25 @@ function full_aibi_calc(Pc, Tc, T, ω, mdl)
 
     ai = Array{Float64}(undef, length(Pc))
     bi = copy(ai)
-    if mdl == "VdW"
+    if mdl == "vdw"
         @. ai = 27 / 64 * ((R * Tc)^2 / Pc)
         @. bi = 1 / 8 * (R * Tc / Pc)
-    elseif mdl == "RK"
+    elseif mdl == "rk"
         @. ai = 0.42747 * ((R * Tc)^2 / Pc) * sqrt(Tc / T)
         @. bi = 0.08664 * (R * Tc / Pc)
-    elseif mdl == "SRK"
+    elseif mdl == "srk"
         α = copy(ai)
         @. α = (1 + (0.48508 + 1.55171 * ω - 0.15613 * ω^2) * (1 - sqrt(T / Tc)))^2
         @. ai = 0.427480 * ((R * Tc)^2 / Pc) * α
         @. bi = 0.086640 * (R * Tc / Pc)
-    elseif mdl == "PR"
+    elseif mdl == "pr"
         α = copy(ai)
         @. α =
             (1 + (0.3796 + 1.485 * ω - 0.1644 * ω^2 + 0.01667 * ω^3) * (1 - sqrt(T / Tc)))^2
         @. ai = 0.457235 * ((R * Tc)^2 / Pc) * α
         @. bi = 0.077796 * (R * Tc / Pc)
     else
-        println("Model not known, defaulted to SRK, please select from: VdW,RK,SRK and PR")
+        println("Model ", mdl, " not known, defaulted to SRK, please select from: VdW,RK,SRK and PR")
         α = copy(ai)
         @. α = (1 + (0.48508 + 1.55171 * ω - 0.15613 * ω^2) * (1 - sqrt(T / Tc)))^2
         @. ai = 0.427480 * ((R * Tc)^2 / Pc) * α
@@ -237,11 +255,10 @@ function full_ab_calc(xi, ai, bi, kij)
     end
     #a=sum(xi.*sqrt.(ai))^2
     # b=sum(xi.*bi)
-
     a = sum((xi .* sqrt.(ai)) * transpose(xi .* sqrt.(ai)) .* (ones(axes(kij)) - kij))
     b = sum(xi .* bi)
     Xj_aij =
-        sum(ai .^ 0.5 * transpose(xi .* ai .^ 0.5) .* (ones(axes(kij)) - kij), dims = 2)
+        sum(ai .^ 0.5 * transpose(xi .* ai .^ 0.5) .* (ones(axes(kij)) - kij), dims=2)
 
 
     return a, b, Xj_aij
