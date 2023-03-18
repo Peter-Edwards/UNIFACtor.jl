@@ -22,5 +22,5 @@ testmean1 = sum((test_UNIFAC1 - test_UNIFACmod1) .^ 2 ./ test_UNIFAC1) / length(
 
 println(test_UNIFAC1, test_UNIFACmod1)
 @test testmean1 < 0.005
-@test isapprox(test_UNIFAC1,[1.32,2.15,1.04];atol=0.1)
-@test isapprox(test_UNIFACmod1,[1.32,2.15,1.04];atol=0.1)
+@test isapprox(test_UNIFAC1, [1.32, 2.15, 1.04]; atol=0.1)
+@test isapprox(test_UNIFACmod1, [1.32, 2.15, 1.04]; atol=0.1)

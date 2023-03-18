@@ -15,34 +15,44 @@ All 63 groups are included in the modified UNIFAC model, along with the requisit
 Currently, there are 2 functions avaliable for use:
 
 ```julia
-UNIFAC.Activity(T_k,M_lst,x_arr)
-UNIFACmod.Activity(T_k,M_lst,x_arr)
+UNIFAC(M_lst,T_k,x_arr)
+UNIFACmod(M_lst,T_k,x_arr)
 ```
 
-T_k is a temperature value in kelvin. The x_arr is a 1xn matrix of molar faction values (where n is the number of components). M_lst is a vector of 1xm matrices describing the composition of each of the component molecules, where m is dependant on the functional groups present. As stated previously, 108 different functional groups are available for use, however the matrices present in in M_lst only need to be long enough to fully describe the molecule. An example of how to use the UNIFAC function is given below:
+T_k is a temperature value in kelvin. The x_arr is a 1xn array of molar faction
+values (where n is the number of components). M_lst is a vector of defined components
+describing the composition and physical properties of each of the component molecules.
+
+In the case of defining the composition for UNIFAC type functions; the
+UNIFAC_comp or UNIFACmod_comp keyword arguments can be used in the def_component function. These arguments
+can parse 2xm matrices where m is the number of subgroups. The first of the 2
+elements in each matrix line defines the index of the subgroup, the second
+indicated that subgroup's quantity within the component. 
+
+Examples of how to use the UNIFAC and UNIFACmod functions are given below:
+
+In this example, we are finding the activity coefficients of benzene, ethanol and acetone.
+The mol% compositions are 0,5, 0.25 and 0.25 respectively.
 
 ```julia
-x1=0.5
-x2=0.25
-x3=1-x1-x2
-x_arr=[x1 x2 x3]
+x_arr=[0.5, 0.25, 0.25]
+T_k=298.15
 
-T_k=298
+#use function def_component to define a component.
+M_1 = def_component(UNIFAC_comp=[10 6], UNIFACmod_comp=[10 6]) #benzene
+M_2 = def_component(UNIFAC_comp=[1 1; 2 1; 15 1], UNIFACmod_comp=[1 1; 2 1; 15 1]) #ethanol
+M_3 = def_component(UNIFAC_comp=[1 1; 19 1], UNIFACmod_comp=[1 1; 21 1])
+#acetone. A different index is used for the ketone group for UNIFAC_mod in this
+#case
 
-M_1=[0 0 0 0 0 0 0 0 0 6]; #benzene
-M_2=[1 1 0 0 0 0 0 0 0 0 0 0 0 0 1]; #ethanol
-M_3=[1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1]; #acetone
+#make a 1xn vector of the components
+M_lst = [M_1,M_2,M_3]
 
-M_lst=[M_1,M_2,M_3]
-
-UNIFAC.Activity(T_k,M_lst,x_arr)
+#Use either the UNIFACmod or UNIFAC functions. This will return a vector of acitivity coefficients. 
+act_coeff_UNIFAC = UNIFAC(M_lst, T_k ,x_arr)
+act_coeff_UNIFACmod = UNIFACmod(M_lst ,T_k ,x_arr)
 ```
-In each case it is assumed that all of the remaining functions groups out of the 108 are treated as zero. The modified UNIFAC function also has this feature. Please note that some molecule composition matrices may need to be changed if switching from UNIFAC to modified UNIFAC and vice versa because each method has their own set of groups and subgroups, for example:
 
-```julia
-M_3=[1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1]; #acetone in UNIFAC
-M_3=[1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1]; #acetone in UNIFACmod
-```
 ## Data Tables
 The order in which the functional groups are listed for the input matrices is different to the order listed of the official list of parameters. The order in which they are arranged in both the UNIFAC and modified UNIFAC is based solely on their interaction groups. The List of Usable subgroups and groups is listed below. For creating the input molecule composition matrices, use the UNIFACtor Index column.
 
